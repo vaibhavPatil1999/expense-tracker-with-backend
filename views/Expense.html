@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E tracker</title>
+    <link rel="stylesheet" href="../Expense.css">
+</head>
+
+<body>
+    <!-- <h1>Expence Tracker</h1> -->
+    <form id="ExpenceForm">
+        <label for="ExpenseAmount"> Choose Expense Amount:</label>
+        <input type="number" ; id="ExpenseAmount" ; min="0" ; max="1000000" ; steps="1" ; name="ExpenseAmount"><br><br>
+        <label for="Decription">Choose Description:</label>
+        <input type="text" ; id="Description" ; name="Description"><br><br>
+        <label>Choose a category:</label>
+        <select id="dropdownList" ; name="dropdownList">
+            <option value="Grocery">Grocery</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Mobile">Mobile</option>
+            <option value="Party">Party</option>
+            <option value="Other">Other</option>
+        </select><br><br>
+        <input type="submit" id="submitBtn" class="sub" value="add" style="display:block">
+        <!--Add Expense</button>--->
+        <input type="submit" id="update" value="update" style="display:none">
+        <!--</button>--->
+    </form>
+    <div id="ulDiv">
+        <ul id="ulList">
+    </div>
+    </ul>
+    </div1>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
+    <script>
+        document.getElementById('ExpenceForm').addEventListener('submit', (e) => {
+            e.preventDefault()
+            const ExpenseAmount = e.target.ExpenseAmount.value
+            const Description = e.target.Description.value
+            const Category = e.target.dropdownList.value
+
+            const expenseObject = {
+                ExpenseAmount,
+                Description,
+                Category
+            }
+
+            axios
+                .post('http://localhost:4545/add-expense', expenseObject)
+                .then((Response) => {
+
+                    showOnScreen(Response.data.data)
+                })
+                .catch((err) => {
+                    console.log(err)
+                })
+
+
+
+        })
+
+
+        function showOnScreen(user) {
+
+            document.getElementById('ExpenseAmount').value = "";
+            document.getElementById('Description').value = "";
+            document.getElementById('dropdownList').value = "";
+
+
+
+            const ULList = document.getElementById('ulList')
+            const childHTML = `<li id=${user.id}>${user.ExpenseAmount}-${user.Description}-${user.Category}
+                     <button onclick=deleteExpense('${user.id}')>Delete</button>
+
+
+                     <button onclick=editExpense('${user.ExpenseAmount}','${user.Description}','${user.Category}','${user.id}')>Edit</button>
+
+                     </li><br>`
+            ULList.innerHTML = childHTML + ULList.innerHTML
+
+
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            axios
+                .get('http://localhost:4545/get-expense')
+                .then((Response) => {
+                    for (i = 0; i < Response.data.info.length; i++) {
+                        showOnScreen(Response.data.info[i])
+
+                    }
+                })
+        })
+
+
+        function deleteExpense(userID) {
+
+            axios
+                .delete(`http://localhost:4545/delete/${userID}`)
+                .then((Response) => {
+                    removeExpense(userID)
+                }).catch((err) => {
+                    console.log(err)
+                })
+        }
+
+
+        function removeExpense(ExpenseID) {
+
+            const ULList = document.getElementById('ulList')
+            var childNodeToBeDeleted = document.getElementById(ExpenseID)
+            if (childNodeToBeDeleted) {
+
+                ULList.removeChild(childNodeToBeDeleted);
+            }
+
+        }
+
+
+
+
+        function editExpense(ExpenseAmount, Description, category, ExpenseID) {
+
+            const submit = document.getElementById('submitBtn')
+
+            submit.style.display = "none"
+
+            document.getElementById('update').style.display = "block"
+
+
+
+            document.getElementById('ExpenseAmount').value = ExpenseAmount
+            document.getElementById('Description').value = Description
+            document.getElementById('dropdownList').value = category
+
+
+            document.getElementById('update').addEventListener('click', (e) => {
+                e.preventDefault()
+                editE(ExpenseID)
+            })
+
+
+
+        }
+
+
+        function editE(ID) {
+
+            const EOBJ = {
+                ExpenseAmount: document.getElementById('ExpenseAmount').value,
+                Description: document.getElementById('Description').value,
+                Category: document.getElementById('dropdownList').value,
+                ID
+            }
+          
+            
+            axios.post('http://localhost:4545/expense/edit',EOBJ)
+                .then((Response) => {
+                   
+                  removeExpense(Response.data.data.ID)
+                  showOnScreen(Response.data.data)
+                }).catch((err) => {
+                    console.log(err)
+                })
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
